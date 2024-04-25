@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+        integrity="sha512-w2iVRz1b4Ow6ZKkTsjvZnXAG5M/wX9x7j4M4ZSTVbqLlh4QNO4xbVUH7XuM8TnZZznGZGT9Hm7fsbU1WWV4N4w=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .chat-container {
+            max-width: 600px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .chat-body {
+            padding: 20px;
+            min-height: 300px;
+            background-color: #f4f4f4;
+            overflow-y: scroll;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .message-bubble {
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #fff;
+            display: inline-block;
+            max-width: 70%;
+        }
+
+        .bot-message {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .user-message .message-bubble {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .chat-input-container {
+            background-color: #007bff;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .send-btn {
+            padding: 10px;
+            background-color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .send-btn i {
+            color: #007bff;
+        }
+
+        .preferences-link {
+            color: #fff;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+
+        .sign-out-btn {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .preferences-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
+
+        .preferences-window {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 10000;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #555;
+        }
+
+        .close-btn:hover {
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Chatbot</h1>
+            <div>
+                <a href="#" class="preferences-link" onclick="openPreferencesWindow()">Preferences</a>
+                <button class="sign-out-btn" onclick="signOut()">Sign Out</button>
+            </div>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <!-- Chat messages will be displayed here -->
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="userInput" class="chat-input" placeholder="Type your message...">
+            <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <div class="preferences-overlay" id="preferencesOverlay" onclick="closePreferencesWindow(event)">
+        <div class="preferences-window" id="preferencesWindow">
+            <!-- Preferences form will be displayed here -->
+            <h1>User Preferences</h1>
+            <form method="post" action="/preferences">
+                <label for="destination">Destination:</label><br>
+                <select id="destination" name="destination">
+                    <option value="Beach">Beach</option>
+                    <option value="Mountain">Mountain</option>
+                    <option value="City">City</option>
+                    <!-- Add more destination options as needed -->
+                </select><br><br>
+                <label for="budget">Budget:</label><br>
+                <input type="number" id="budget" name="budget" min="0"><br><br>
+                <label for="travel_type">Travel Type:</label><br>
+                <input type="radio" id="solo" name="travel_type" value="Solo">
+                <label for="solo">Solo</label><br>
+                <input type="radio" id="couple" name="travel_type" value="Couple">
+                <label for="couple">Couple</label><br>
+                <input type="radio" id="family" name="travel_type" value="Family">
+                <label for="family">Family</label><br><br>
+                <label for="activities">Preferred Activities:</label><br>
+                <input type="checkbox" id="beach_activities" name="activities" value="Beach Activities">
+                <label for="beach_activities">Beach Activities</label><br>
+                <input type="checkbox" id="mountain_activities" name="activities" value="Mountain Activities">
+                <label for="mountain_activities">Mountain Activities</label><br>
+                <input type="checkbox" id="city_activities" name="activities" value="City Activities">
+                <label for="city_activities">City Activities</label><br><br>
+                <label for="hotel_rating">Hotel Rating:</label><br>
+                <select id="hotel_rating" name="hotel_rating">
+                    <option value="1">1 Star</option>
+                    <option value="2">2 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="5">5 Stars</option>
+                </select><br><br>
+                <label for="restaurant_rating">Restaurant Rating:</label><br>
+                <select id="restaurant_rating" name="restaurant_rating">
+                    <option value="1">1 Star</option>
+                    <option value="2">2 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="5">5 Stars</option>
+                </select><br><br>
+                <input type="submit" value="Save Preferences">
+            </form>
+
+            <!-- Close button -->
+            <button class="close-btn" onclick="closePreferencesWindow(event)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+        const userInput = document.getElementById('userInput');
+        const message = userInput.value.trim();
+        if (!message) return; // Ignore empty messages
+
+        appendMessage(message, 'user');
+        showLoadingAnimation();
+
+        // Send message to backend
+        fetch('/send_message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoadingAnimation();
+            appendMessage(data.message, 'bot');
+        })
+        .catch(error => {
+            hideLoadingAnimation();
+            console.error('Error sending message:', error);
+            appendMessage('Sorry, something went wrong. Please try again later.', 'bot');
+        });
+
+        // Clear input field after sending message
+        userInput.value = '';
+    }
+
+    function appendMessage(message, sender) {
+        const chatBody = document.getElementById('chatBody');
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('chat-message');
+        messageElement.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+        messageElement.innerText = message;
+        chatBody.appendChild(messageElement);
+        // Scroll to the bottom of the chat interface
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function showLoadingAnimation() {
+        const chatBody = document.getElementById('chatBody');
+        const loadingMessage = document.createElement('div');
+        loadingMessage.classList.add('chat-message');
+        loadingMessage.classList.add('bot-message');
+        loadingMessage.innerText = 'We are cooking up a response...';
+        chatBody.appendChild(loadingMessage);
+        // Scroll to the bottom of the chat interface
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function hideLoadingAnimation() {
+        const chatBody = document.getElementById('chatBody');
+        const loadingMessage = chatBody.querySelector('.bot-message:last-child');
+        if (loadingMessage && loadingMessage.innerText === 'We are cooking up a response...') {
+            chatBody.removeChild(loadingMessage);
+        }
+    }
+
+    function signOut() {
+        window.location.href = '/logout';
+    }
+
+      function openPreferencesWindow() {
+            const preferencesOverlay = document.getElementById('preferencesOverlay');
+            const preferencesWindow = document.getElementById('preferencesWindow');
+            preferencesOverlay.style.display = 'block';
+            preferencesWindow.style.display = 'block';
+        }
+
+        function closePreferencesWindow(event) {
+            if (event.target.id === 'preferencesOverlay') {
+                const preferencesOverlay = document.getElementById('preferencesOverlay');
+                const preferencesWindow = document.getElementById('preferencesWindow');
+                preferencesOverlay.style.display = 'none';
+                preferencesWindow.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
